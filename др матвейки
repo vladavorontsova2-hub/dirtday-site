@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Поздравление — тортик для Матвея</title>
+<style>
+  :root{
+    --bg1:#0b0710;
+    --bg2:#241225;
+    --accent:#efeef2;
+    --shadow: rgba(0,0,0,0.6);
+    --candle-body:#e6a6a6;
+  }
+  html,body{height:100%;margin:0;font-family:Inter, system-ui, sans-serif;}
+  body{
+    background: radial-gradient(ellipse at center, rgba(255,255,255,0.02) 0%, transparent 40%), linear-gradient(180deg,var(--bg1),var(--bg2));
+    color:#fff;
+    overflow:hidden;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  /* Sparkles background */
+  .sparkles{
+    position:fixed; inset:0; pointer-events:none; z-index:0;
+    background-image: radial-gradient(circle at 10% 20%, rgba(255,255,255,0.03) 0 2px, transparent 3px),
+                      radial-gradient(circle at 70% 80%, rgba(255,255,255,0.02) 0 2px, transparent 3px);
+    animation: glow 6s ease-in-out infinite;
+  }
+  @keyframes glow{
+    0%{filter:brightness(0.95)}
+    50%{filter:brightness(1.12)}
+    100%{filter:brightness(0.95)}
+  }
+
+  /* main stage */
+  .stage{position:relative; width:100%; max-width:980px; height:640px; display:flex; align-items:center; justify-content:center; z-index:1;}
+  .card{
+    width:860px; height:520px; background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.15));
+    border-radius:18px; box-shadow: 0 20px 60px var(--shadow); position:relative; overflow:hidden;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  /* small particle canvas (confetti) */
+  canvas.confetti{position:absolute; inset:0; z-index:2; pointer-events:none;}
+
+  /* cake */
+  .cake-area{position:relative; width:520px; height:300px; display:flex; align-items:center; justify-content:center;}
+  .cake{
+    width:380px; height:170px; background:linear-gradient(180deg,#ffffff,#f6f6f8);
+    border-radius:18px; box-shadow:0 10px 30px rgba(0,0,0,0.45), inset 0 -6px 12px rgba(0,0,0,0.05);
+    position:relative; z-index:3; display:flex; align-items:flex-start; justify-content:center;
+  }
+  .cake::after{
+    content:""; position:absolute; bottom:-24px; width:220px; height:44px; background:linear-gradient(180deg,#dedee3,#cfcfd6);
+    border-radius:12px; filter:blur(0.2px); opacity:0.9;
+    transform:translateY(50%); left:50%; transform-origin:center; transform:translate(-50%,50%);
+  }
+
+  /* candle tray area */
+  .tray{
+    position:absolute; bottom:12px; left:18px; right:18px; height:86px; display:flex; align-items:center; justify-content:center; gap:8px; z-index:4;
+    pointer-events:auto;
+  }
+  .tray-inner{background:rgba(255,255,255,0.02); padding:10px;border-radius:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:center;}
+  .candle{
+    width:18px; height:58px; border-radius:6px; position:relative; cursor:grab; user-select:none;
+    display:flex; align-items:flex-start; justify-content:center; flex-direction:column;
+    transform-origin:center top; touch-action:none;
+  }
+  .candle:active{cursor:grabbing;}
+  .candle .stick{width:100%; height:46%; border-radius:4px; background:linear-gradient(180deg,#ffd6d6,#f6b6b6); box-shadow:0 2px 6px rgba(0,0,0,0.3); position:relative;}
+  .candle .stripe{position:absolute; left:2px; right:2px; height:4px; background:rgba(255,255,255,0.18); top:8px; border-radius:2px; opacity:0.8; transform:rotate(-10deg)}
+  .candle .flame{
+    width:10px; height:12px; border-radius:50% 50% 50% 50% / 60% 60% 40% 40%; position:absolute; top:-10px; z-index:5; left:50%; transform:translateX(-50%);
+    pointer-events:none;
+    background: radial-gradient(circle at 30% 30%, #fff2a8 0 20%, #ffd86e 23%, #ff7a2b 55%, transparent 58%);
+    filter:drop-shadow(0 3px 6px rgba(255,110,60,0.18));
+    animation: flicker 900ms infinite;
+  }
+  @keyframes flicker{
+    0%{transform:translateX(-50%) translateY(0) scale(1);}
+    50%{transform:translateX(-50%) translateY(-2px) scale(0.96);}
+    100%{transform:translateX(-50%) translateY(0) scale(1);}
+  }
+
+𝓛𝓸𝓭𝓸𝓬𝓱𝓴, [05.11.2025 22:36]
+/* when placed on cake - small scale */
+  .candle.placed{cursor:default; pointer-events:none; transform:scale(0.95) !important;}
+
+  /* modal question */
+  .modal{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center; z-index:6; pointer-events:none;
+  }
+  .dialog{
+    width:420px; background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02)); border-radius:12px; padding:18px; text-align:center;
+    box-shadow:0 14px 50px rgba(0,0,0,0.6); transform:translateY(30px) scale(0.98); opacity:0; transition: all 320ms ease; pointer-events:auto;
+  }
+  .dialog.show{opacity:1; transform:translateY(0) scale(1);}
+  .dialog h2{margin:6px 0 12px 0; font-size:20px;}
+  .dialog .btns{display:flex; gap:12px; justify-content:center; margin-top:12px;}
+  .btn{background:transparent; border:1px solid rgba(255,255,255,0.12); padding:8px 14px; border-radius:8px; color:#fff; cursor:pointer;}
+  .btn.primary{background:linear-gradient(90deg,#ff9fc6,#ffc68a); color:#2b0b0b; border:none; font-weight:600;}
+
+  /* envelope + letter */
+  .envelope-wrap{position:absolute; left:50%; top:50%; transform:translate(-50%,-20%); z-index:7; pointer-events:none; opacity:0; transition: all 420ms ease;}
+  .envelope{width:320px; height:200px; position:relative; transform-origin:center center; margin:0 auto;}
+  .env-body{position:absolute; left:0; right:0; bottom:0; top:14%; background:#f3efe8; border-radius:8px; box-shadow:0 14px 40px rgba(0,0,0,0.35); overflow:hidden; display:flex; align-items:center; justify-content:center;}
+  .env-flap{
+    position:absolute; left:0; right:0; top:0; height:55%; background:#d8cfc6; transform-origin:top center; border-bottom:1px solid rgba(0,0,0,0.06);
+    border-top-left-radius:8px; border-top-right-radius:8px;
+    transition: transform 520ms cubic-bezier(.2,.9,.3,1);
+  }
+  .env.open .env-flap{transform: rotateX(180deg) translateY(-8px);}
+  .letter{
+    width:86%; height:76%; background:white; box-shadow:0 6px 22px rgba(0,0,0,0.18); transform:translateY(60%); transition: transform 520ms cubic-bezier(.2,.9,.3,1); border-radius:6px; padding:16px; overflow:auto;
+    font-family: "Times New Roman", Georgia, serif; color:#111; font-size:16px; line-height:1.45;
+  }
+  .env.open .letter{transform:translateY(8%);}
+  .letter[contenteditable="true"]{outline:none; caret-color:#d33;}
+
+  /* small footer hint */
+  .hint{position:absolute; bottom:8px; left:12px; font-size:12px; opacity:0.7; z-index:5;}
+  /* responsive */
+  @media(max-width:880px){
+    .card{width:92%; height:86%; padding:12px;}
+    .stage{height:84vh;}
+  }
+</style>
+</head>
+<body>
+<div class="sparkles"></div>
+
+<div class="stage">
+  <div class="card" id="card">
+    <canvas class="confetti" id="confetti"></canvas>
+
+    <div class="cake-area" id="cakeArea">
+      <div class="cake" id="cake" aria-label="Торт"></div>
+    </div>
+
+    <div class="tray" id="tray">
+      <div class="tray-inner" id="trayInner"></div>
+    </div>
+
+    <div class="hint">Перетащи свечки на торт. Когда все 15 — появится вопрос.</div>
+
+    <!-- modal -->
+    <div class="modal" id="modal">
+      <div class="dialog" id="dialog">
+        <h2>Хочешь получить подарок?</h2>
+        <div class="btns">
+          <button class="btn" id="noBtn">Нет</button>
+          <button class="btn primary" id="yesBtn">Да</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- envelope -->
+    <div class="envelope-wrap" id="envelopeWrap" aria-hidden="true">
+      <div class="envelope" id="envelope">
+        <div class="env-body"></div>
+        <div class="env-flap"></div>
+        <div class="letter" contenteditable="true" id="letter" aria-label="Письмо: напиши текст сюда">Напиши своё поздравление здесь...</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ------------ Setup candles tray ------------ */
+
+𝓛𝓸𝓭𝓸𝓬𝓱𝓴, [05.11.2025 22:36]
+const TOTAL = 15;
+const trayInner = document.getElementById('trayInner');
+const cake = document.getElementById('cake');
+const cakeRectForPositions = {w:320, h:110}; // top surface approximate
+const placed = new Array(TOTAL).fill(false);
+let placedCount = 0;
+const cakeSlots = []; // will hold positions where candles snap
+
+// create candles dynamically with slight color variations
+for(let i=0;i<TOTAL;i++){
+  const c = document.createElement('div');
+  c.className='candle';
+  c.dataset.id = i;
+  const stick = document.createElement('div'); stick.className='stick';
+  const stripe = document.createElement('div'); stripe.className='stripe';
+  stick.appendChild(stripe);
+  const flame = document.createElement('div'); flame.className='flame';
+  c.appendChild(flame);
+  c.appendChild(stick);
+
+  // colour variation for bodies
+  const hue = 10 + (i*16)%60;
+  c.querySelector('.stick').style.background = linear-gradient(180deg,hsl(${hue} 80% 85%), hsl(${hue} 80% 70%));
+  trayInner.appendChild(c);
+
+  makeDraggable(c);
+}
+
+// compute cake slots (15 positions across cake top)
+function computeCakeSlots(){
+  const cakeBox = cake.getBoundingClientRect();
+  const top = cakeBox.top + 18; // inside cake top margin
+  const left = cakeBox.left + 24;
+  const width = cakeBox.width - 48;
+  const spacing = width / (TOTAL + 1);
+  cakeSlots.length = 0;
+  for(let i=1;i<=TOTAL;i++){
+    cakeSlots.push({
+      x: left + spacing*i - 9, // center align (candle width ~18)
+      y: top + 34 // vertical top position
+    });
+  }
+}
+window.addEventListener('resize', computeCakeSlots);
+setTimeout(computeCakeSlots,200);
+
+/* ---------- Dragging (pointer events) ---------- */
+function makeDraggable(el){
+  let offsetX=0, offsetY=0, startX=0, startY=0, dragging=false;
+  let originalRect=null;
+  el.style.position='relative';
+  el.style.touchAction='none';
+
+  el.addEventListener('pointerdown',(e)=>{
+    if(el.classList.contains('placed')) return;
+    dragging=true;
+    el.setPointerCapture(e.pointerId);
+    const rect=el.getBoundingClientRect();
+    originalRect = {left:rect.left, top:rect.top, w:rect.width, h:rect.height};
+    startX = e.clientX; startY = e.clientY;
+    offsetX = e.clientX - rect.left;
+    offsetY = e.clientY - rect.top;
+    el.style.position='fixed';
+    el.style.left = (rect.left)+'px';
+    el.style.top = (rect.top)+'px';
+    el.style.zIndex = 1000;
+    el.style.transform = 'scale(1.05)';
+  });
+
+  window.addEventListener('pointermove',(e)=>{
+    if(!dragging) return;
+    e.preventDefault();
+    let x = e.clientX - offsetX;
+    let y = e.clientY - offsetY;
+    el.style.left = x+'px';
+    el.style.top = y+'px';
+  });
+
+  window.addEventListener('pointerup',(e)=>{
+    if(!dragging) return;
+    dragging=false;
+    el.releasePointerCapture?.(e.pointerId);
+    // check if dropped on cake (intersect center)
+    const cakeBox = cake.getBoundingClientRect();
+    const elBox = el.getBoundingClientRect();
+    const centerX = elBox.left + elBox.width/2;
+    const centerY = elBox.top + elBox.height/2;
+    // simple intersection test: center must be inside cake box
+    if(centerX > cakeBox.left && centerX < cakeBox.right && centerY > cakeBox.top && centerY < cakeBox.bottom){
+      // snap to nearest empty slot
+      computeCakeSlots();
+      let nearestIdx=-1, nearestDist=1e9;
+      for(let i=0;i<TOTAL;i++){
+        if(placed[i]) continue;
+        const s = cakeSlots[i];
+        const dx = centerX - s.x, dy = centerY - s.y;
+        const d = Math.hypot(dx,dy);
+        if(d < nearestDist){ nearestDist=d; nearestIdx=i; }
+      }
+      if(nearestIdx >=0){
+        // place
+        placed[nearestIdx] = true;
+        placedCount++;
+        // move element to absolute position atop cake
+        el.style.left = (cakeSlots[nearestIdx].x)+'px';
+        el.style.top = (cakeSlots[nearestIdx].y)+'px';
+
+𝓛𝓸𝓭𝓸𝓬𝓱𝓴, [05.11.2025 22:36]
+el.classList.add('placed');
+        el.style.position='fixed';
+        el.style.transform='none';
+        el.style.zIndex=80;
+        el.style.pointerEvents='none';
+        // small wiggle flame animation (already flicker)
+        // if all placed -> show modal
+        if(placedCount === TOTAL){
+          showDialog();
+        }
+        return;
+      }
+    }
+    // else return to tray (animate)
+    el.style.transition='all 220ms ease';
+    el.style.left = originalRect.left+'px';
+    el.style.top = originalRect.top+'px';
+    setTimeout(()=>{ el.style.position='relative'; el.style.left=''; el.style.top=''; el.style.zIndex=''; el.style.transform=''; el.style.transition=''; },230);
+  });
+}
+
+/* ------------ Dialog handling ------------ */
+const modal = document.getElementById('modal');
+const dialog = document.getElementById('dialog');
+const noBtn = document.getElementById('noBtn');
+const yesBtn = document.getElementById('yesBtn');
+const envelopeWrap = document.getElementById('envelopeWrap');
+const envelope = document.getElementById('envelope');
+const letter = document.getElementById('letter');
+
+function showDialog(){
+  modal.style.pointerEvents='auto';
+  dialog.classList.add('show');
+  // gently dim background and sprinkle confetti
+  launchConfetti();
+}
+
+noBtn.addEventListener('click', ()=>{
+  dialog.classList.remove('show');
+  // small sad message near dialog
+  showTransient("Жаль, но тебе придется нажать да");
+});
+
+yesBtn.addEventListener('click', ()=>{
+  dialog.classList.remove('show');
+  modal.style.pointerEvents='none';
+  // show envelope animation
+  openEnvelope();
+});
+
+/* transient message */
+function showTransient(text){
+  const t = document.createElement('div');
+  t.textContent = text;
+  t.style.position='absolute';
+  t.style.left='50%';
+  t.style.top='60%';
+  t.style.transform='translateX(-50%)';
+  t.style.background='rgba(0,0,0,0.6)';
+  t.style.padding='10px 14px';
+  t.style.borderRadius='12px';
+  t.style.zIndex=9;
+  t.style.fontSize='16px';
+  t.style.opacity='0';
+  t.style.transition='all 300ms ease';
+  document.getElementById('card').appendChild(t);
+  requestAnimationFrame(()=>{ t.style.opacity='1'; t.style.transform='translateX(-50%) translateY(-6px)'; });
+  setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(-18px)'; },1400);
+  setTimeout(()=>t.remove(),1800);
+}
+
+/* envelope animation */
+function openEnvelope(){
+  envelopeWrap.style.pointerEvents='auto';
+  envelopeWrap.style.opacity='1';
+  envelopeWrap.style.transform = 'translate(-50%,-18%) scale(1)';
+  envelope.classList.remove('open');
+  // show briefly then play open
+  setTimeout(()=>{
+    envelope.classList.add('open');
+    // reveal letter (contenteditable)
+    letter.setAttribute('contenteditable','true');
+    letter.focus();
+  },260);
+}
+
+/* confetti canvas (simple) */
+const confCanvas = document.getElementById('confetti');
+const ctx = confCanvas.getContext('2d');
+let confettiPieces = [];
+function resizeCanvas(){
+  confCanvas.width = confCanvas.clientWidth = document.getElementById('card').clientWidth;
+  confCanvas.height = confCanvas.clientHeight = document.getElementById('card').clientHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+function launchConfetti(){
+  confettiPieces = [];
+  const colors = ["#f8c6e8","#ffd7a6","#b8baf0","#ffd1dc","#d3f7e0"];
+  for(let i=0;i<80;i++){
+    confettiPieces.push({
+      x: Math.random()*confCanvas.width,
+      y: -Math.random()*confCanvas.height,
+      vx: (Math.random()-0.5)*2,
+      vy: 1 + Math.random()*3,
+      size: 6 + Math.random()*8,
+      rot: Math.random()*360,
+      color: colors[Math.floor(Math.random()*colors.length)],
+      spin: (Math.random()-0.5)*0.2
+    });
+  }
+  requestAnimationFrame(confettiLoop);
+}
+let confAnimId=null;
+function confettiLoop(){
+  ctx.clearRect(0,0,confCanvas.width, confCanvas.height);
+
+𝓛𝓸𝓭𝓸𝓬𝓱𝓴, [05.11.2025 22:36]
+for(let p of confettiPieces){
+    p.x += p.vx; p.y += p.vy; p.rot += p.spin; p.vy += 0.02;
+    ctx.save();
+    ctx.translate(p.x,p.y);
+    ctx.rotate(p.rot);
+    ctx.fillStyle = p.color;
+    ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size*0.6);
+    ctx.restore();
+  }
+  confettiPieces = confettiPieces.filter(p => p.y < confCanvas.height + 40);
+  if(confettiPieces.length>0) confAnimId = requestAnimationFrame(confettiLoop);
+  else cancelAnimationFrame(confAnimId);
+}
+
+/* initial gentle sparkles (CSS only), no music */
+
+/* Accessibility: allow keyboard action to open envelope once dialog shown */
+document.addEventListener('keydown',(e)=>{
+  if(e.key === 'Enter' && placedCount===TOTAL && dialog.classList.contains('show')){
+    yesBtn.click();
+  }
+});
+
+</script>
+</body>
+</html>
